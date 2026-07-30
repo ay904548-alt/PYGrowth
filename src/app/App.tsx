@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { RouterProvider, createBrowserRouter, Outlet, useNavigate, useLocation, useOutletContext, useParams, Link } from "react-router";
 import { motion, useInView, AnimatePresence } from "motion/react";
 import {
   TrendingUp, BarChart2, Target, Search, Activity,
@@ -1360,32 +1361,43 @@ function HeroDashboard() {
 
 // ─── Navigation ────────────────────────────────────────────────────────────
 
-const navLinks = ["Solutions", "Growth OS", "Insights", "About", "Contact"];
+const navLinks = ["Solutions", "Growth OS", "Insights", "Payment", "Contact"];
+
+function navPath(link: string) {
+  if (link === "Home") return "/";
+  return "/" + link.toLowerCase().replace(/\s/g, "-");
+}
 
 function Navbar({ onConsult }: { onConsult: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [active, setActive] = useState("Home");
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Trigger immediately on any scroll so the header never shows content underneath
     const onScroll = () => setScrolled(window.scrollY > 10);
-    onScroll(); // run once on mount in case page loads mid-scroll
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Prevent body scroll while mobile menu is open
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(id.toLowerCase().replace(/\s/g, "-"));
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+  // Close mobile menu on route change
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
+  const isActive = (link: string) => {
+    const path = navPath(link);
+    if (path === "/") return location.pathname === "/";
+    return location.pathname.startsWith(path);
+  };
+
+  const goTo = (link: string) => {
+    navigate(navPath(link));
     setMobileOpen(false);
-    setActive(id);
   };
 
   return (
@@ -1401,15 +1413,15 @@ function Navbar({ onConsult }: { onConsult: () => void }) {
         }}
       >
         <div className="max-w-[1200px] mx-auto px-6 h-full flex items-center justify-between">
-          <button onClick={() => scrollTo("Home")} className="flex items-center gap-2 group">
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 group">
             <ImageWithFallback src={logoSrc} alt="PY Growth logo" className="w-16 h-16 object-contain" style={{ filter: "invert(1)", mixBlendMode: "screen", transform: "scale(2.0)", transformOrigin: "center center" }} />
             <span className="text-white font-semibold tracking-wide text-sm">PY GROWTH</span>
           </button>
           <nav className="hidden md:flex items-center gap-8">
             {["Home", ...navLinks].map((link) => (
-              <button key={link} onClick={() => scrollTo(link)} className={`text-sm transition-colors duration-200 relative group ${active === link ? "text-white" : "text-white/50 hover:text-white/80"}`}>
+              <button key={link} onClick={() => goTo(link)} className={`text-sm transition-colors duration-200 relative group ${isActive(link) ? "text-white" : "text-white/50 hover:text-white/80"}`}>
                 {link}
-                <span className={`absolute -bottom-0.5 left-0 h-px bg-indigo-400 transition-all duration-300 ${active === link ? "w-full" : "w-0 group-hover:w-full"}`} />
+                <span className={`absolute -bottom-0.5 left-0 h-px bg-indigo-400 transition-all duration-300 ${isActive(link) ? "w-full" : "w-0 group-hover:w-full"}`} />
               </button>
             ))}
           </nav>
@@ -1428,7 +1440,6 @@ function Navbar({ onConsult }: { onConsult: () => void }) {
       <AnimatePresence>
         {mobileOpen && (
           <>
-            {/* Backdrop with blur */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
@@ -1439,7 +1450,6 @@ function Navbar({ onConsult }: { onConsult: () => void }) {
               style={{ background: "rgba(4,8,18,0.75)", backdropFilter: "blur(12px)" }}
               onClick={() => setMobileOpen(false)}
             />
-            {/* Slide-in panel */}
             <motion.div
               key="panel"
               initial={{ x: "100%" }}
@@ -1453,7 +1463,7 @@ function Navbar({ onConsult }: { onConsult: () => void }) {
               {["Home", ...navLinks].map((link) => (
                 <button
                   key={link}
-                  onClick={() => scrollTo(link)}
+                  onClick={() => goTo(link)}
                   className="py-4 text-left text-base text-white/70 hover:text-white border-b border-white/6 transition-colors flex items-center justify-between group"
                 >
                   {link}
@@ -1762,6 +1772,7 @@ function SolutionsSection() {
 
 const articles = [
   {
+    slug: "organic-visibility-vs-paid-traffic",
     cat: "Marketplace Strategy",
     title: "Why Organic Visibility Is More Valuable Than Paid Traffic on Marketplaces",
     time: "5 min read",
@@ -1779,6 +1790,7 @@ const articles = [
     ],
   },
   {
+    slug: "hidden-margin-killers",
     cat: "Profitability",
     title: "The Hidden Margin Killers Every Marketplace Seller Ignores",
     time: "4 min read",
@@ -1798,6 +1810,7 @@ const articles = [
     ],
   },
   {
+    slug: "growth-operating-system",
     cat: "Growth Frameworks",
     title: "How to Build a Growth Operating System for Your Marketplace Business",
     time: "5 min read",
@@ -1821,68 +1834,8 @@ const articles = [
   },
 ];
 
-function ArticleModal({ article, onClose }: { article: typeof articles[0] | null; onClose: () => void }) {
-  if (!article) return null;
-  return (
-    <motion.div
-      className="fixed inset-0 z-[200] flex items-start justify-center"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0" style={{ background: "rgba(4,8,18,0.85)", backdropFilter: "blur(14px)" }} onClick={onClose} />
-
-      {/* Panel */}
-      <motion.div
-        className="relative z-10 w-full max-w-2xl mx-4 mt-16 mb-8 rounded-[24px] overflow-hidden flex flex-col"
-        style={{ background: "#0c1221", border: "1px solid rgba(255,255,255,0.08)", maxHeight: "calc(100vh - 100px)" }}
-        initial={{ y: 24, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 24, opacity: 0 }}
-        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between p-7 pb-5 border-b border-white/6">
-          <div className="space-y-2 pr-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full">{article.cat}</span>
-              <span className="text-xs text-white/30">{article.time}</span>
-            </div>
-            <h2 className="text-lg font-semibold text-white leading-snug" style={{ fontFamily: "'Playfair Display', serif" }}>{article.title}</h2>
-          </div>
-          <button onClick={onClose} className="flex-shrink-0 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
-            <X size={14} className="text-white/60" />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="overflow-y-auto p-7 pt-6 space-y-5">
-          {article.body.map((block, i) =>
-            block.type === "h3" ? (
-              <h3 key={i} className="text-base font-semibold text-white pt-2" style={{ fontFamily: "'Playfair Display', serif" }}>{block.text}</h3>
-            ) : (
-              <p key={i} className="text-sm text-white/55 leading-relaxed">{block.text}</p>
-            )
-          )}
-          <div className="pt-6 border-t border-white/6">
-            <p className="text-xs text-white/25 mb-4">Want to apply these insights to your marketplace business?</p>
-            <button
-              onClick={() => { onClose(); window.dispatchEvent(new CustomEvent("openConsult")); }}
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-indigo-600/25"
-            >
-              Book a Growth Consultation
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
 
 function GrowthLabSection() {
-  const [openArticle, setOpenArticle] = useState<typeof articles[0] | null>(null);
   return (
     <Section id="insights" className="py-32 bg-[#080e1c]">
       <div className="max-w-[1200px] mx-auto px-6">
@@ -1891,30 +1844,29 @@ function GrowthLabSection() {
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-indigo-400">Insights</span>
             <h2 className="text-3xl md:text-4xl font-semibold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>Latest Marketplace Insights</h2>
           </div>
-          <button className="flex items-center gap-1.5 text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors group">Explore Insights <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" /></button>
+          <Link to="/insights" className="flex items-center gap-1.5 text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors group">Explore Insights <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" /></Link>
         </motion.div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {articles.map((a) => (
-            <motion.div key={a.title} variants={fadeUp} whileHover={{ y: -5 }} transition={{ duration: 0.22 }} className="rounded-[20px] border border-white/7 bg-[#0c1221] overflow-hidden group cursor-pointer hover:border-indigo-500/25 transition-colors duration-200">
-              <div className="h-40 bg-gradient-to-br from-indigo-600/15 to-violet-600/10 flex items-center justify-center border-b border-white/6">
-                <BookOpen size={32} className="text-indigo-400/40 group-hover:text-indigo-400/70 transition-colors" />
-              </div>
-              <div className="p-6 space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full">{a.cat}</span>
-                  <span className="text-xs text-white/30">{a.time}</span>
+            <Link key={a.title} to={`/insights/${a.slug}`} className="block">
+              <motion.div variants={fadeUp} whileHover={{ y: -5 }} transition={{ duration: 0.22 }} className="rounded-[20px] border border-white/7 bg-[#0c1221] overflow-hidden group cursor-pointer hover:border-indigo-500/25 transition-colors duration-200 h-full">
+                <div className="h-40 bg-gradient-to-br from-indigo-600/15 to-violet-600/10 flex items-center justify-center border-b border-white/6">
+                  <BookOpen size={32} className="text-indigo-400/40 group-hover:text-indigo-400/70 transition-colors" />
                 </div>
-                <h4 className="text-sm font-semibold text-white leading-snug">{a.title}</h4>
-                <p className="text-xs text-white/40 leading-relaxed">{a.desc}</p>
-                <button onClick={() => setOpenArticle(a)} className="flex items-center gap-1.5 text-xs font-medium text-indigo-400 group-hover:gap-3 transition-all duration-200 pt-1">Read Article <ArrowRight size={12} /></button>
-              </div>
-            </motion.div>
+                <div className="p-6 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full">{a.cat}</span>
+                    <span className="text-xs text-white/30">{a.time}</span>
+                  </div>
+                  <h4 className="text-sm font-semibold text-white leading-snug">{a.title}</h4>
+                  <p className="text-xs text-white/40 leading-relaxed">{a.desc}</p>
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-400 group-hover:gap-3 transition-all duration-200 pt-1">Read Article <ArrowRight size={12} /></div>
+                </div>
+              </motion.div>
+            </Link>
           ))}
         </div>
       </div>
-      <AnimatePresence>
-        {openArticle && <ArticleModal article={openArticle} onClose={() => setOpenArticle(null)} />}
-      </AnimatePresence>
     </Section>
   );
 }
@@ -2062,7 +2014,7 @@ function Footer() {
             </div>
           </div>
           {[
-            { heading: "Company", links: ["About", "Growth OS", "Solutions", "Contact"] },
+            { heading: "Company", links: ["Growth OS", "Solutions", "Payment", "Contact"] },
             { heading: "Solutions", links: ["Visibility", "Profitability", "Advertising", "Expansion", "Intelligence"] },
             { heading: "Growth Tools", links: ["Profit Calculator", "ROAS Calculator", "Discount Analyzer", "Readiness Assessment", "Revenue Planner"] },
           ].map((col) => (
@@ -2081,13 +2033,180 @@ function Footer() {
   );
 }
 
-// ─── App ───────────────────────────────────────────────────────────────────
+// ─── Page components ───────────────────────────────────────────────────────
 
-export default function App() {
+function HomePage() {
+  const onConsult = useOutletContext<() => void>();
+  return (
+    <>
+      <HeroSection onConsult={onConsult} />
+      <ComplexitySection />
+      <GrowthOSSection onConsult={onConsult} />
+      <WhyFoundersSection />
+      <GrowthToolsSection />
+      <SolutionsSection />
+      <GrowthLabSection />
+      <AboutSection />
+      <FAQSection />
+      <ConsultationSection onConsult={onConsult} />
+    </>
+  );
+}
+
+function SolutionsPage() {
+  return <div className="pt-20"><SolutionsSection /></div>;
+}
+
+function GrowthOSPage() {
+  const onConsult = useOutletContext<() => void>();
+  return <div className="pt-20"><GrowthOSSection onConsult={onConsult} /></div>;
+}
+
+function InsightsPage() {
+  return (
+    <div className="pt-20 min-h-screen">
+      <GrowthLabSection />
+    </div>
+  );
+}
+
+function ArticlePage() {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const article = articles.find((a) => a.slug === slug);
+
+  useEffect(() => { window.scrollTo(0, 0); }, [slug]);
+
+  if (!article) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center pt-20 text-center px-6">
+        <p className="text-white/40 text-sm mb-4">Article not found.</p>
+        <button onClick={() => navigate("/insights")} className="text-indigo-400 text-sm hover:text-indigo-300 flex items-center gap-2">
+          <ChevronLeft size={14} /> Back to Insights
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen pt-24 pb-20" style={{ background: "#080c14" }}>
+      <div className="max-w-2xl mx-auto px-6">
+        {/* Back */}
+        <button
+          onClick={() => navigate("/insights")}
+          className="flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors mb-10 group"
+        >
+          <ChevronLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          Back to Insights
+        </button>
+
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full">{article.cat}</span>
+            <span className="text-xs text-white/30">{article.time}</span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-semibold text-white leading-snug mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>
+            {article.title}
+          </h1>
+          <p className="text-white/45 text-base leading-relaxed">{article.desc}</p>
+          <div className="mt-6 h-px bg-white/7" />
+        </motion.div>
+
+        {/* Body */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="space-y-6">
+          {article.body.map((block, i) =>
+            block.type === "h3" ? (
+              <h3 key={i} className="text-lg font-semibold text-white pt-4" style={{ fontFamily: "'Playfair Display', serif" }}>{block.text}</h3>
+            ) : (
+              <p key={i} className="text-white/55 leading-relaxed text-[15px]">{block.text}</p>
+            )
+          )}
+        </motion.div>
+
+        {/* CTA */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="mt-14 rounded-[20px] border border-indigo-500/20 bg-indigo-500/5 p-8">
+          <p className="text-sm font-semibold text-white mb-2">Ready to apply these insights?</p>
+          <p className="text-sm text-white/40 mb-5 leading-relaxed">Book a growth consultation and we'll diagnose your specific marketplace challenges.</p>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("openConsult"))}
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-indigo-600/25 flex items-center gap-2"
+          >
+            Book a Growth Consultation <ArrowRight size={14} />
+          </button>
+        </motion.div>
+
+        {/* More articles */}
+        <div className="mt-14">
+          <p className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-6">More Articles</p>
+          <div className="space-y-4">
+            {articles.filter((a) => a.slug !== slug).map((a) => (
+              <Link key={a.slug} to={`/insights/${a.slug}`} className="flex items-start gap-4 p-4 rounded-[14px] border border-white/6 bg-white/2 hover:border-indigo-500/25 hover:bg-white/4 transition-all duration-200 group">
+                <BookOpen size={16} className="text-indigo-400/50 shrink-0 mt-0.5 group-hover:text-indigo-400 transition-colors" />
+                <div>
+                  <span className="text-xs text-indigo-400/70 mb-1 block">{a.cat}</span>
+                  <p className="text-sm text-white/60 group-hover:text-white/80 transition-colors leading-snug">{a.title}</p>
+                </div>
+                <ArrowRight size={13} className="text-white/20 group-hover:text-indigo-400 shrink-0 mt-1 ml-auto transition-colors" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PaymentPage() {
+  return (
+    <div className="min-h-screen pt-24 pb-20 flex items-center justify-center">
+      <div className="max-w-[1200px] w-full mx-auto px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center space-y-4"
+        >
+          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-indigo-400">Payment</span>
+          <h1 className="text-3xl md:text-4xl font-semibold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+            Payment
+          </h1>
+          <p className="text-white/30 text-sm">Content coming soon.</p>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+function ContactPage() {
+  const onConsult = useOutletContext<() => void>();
+  return (
+    <div className="pt-20">
+      <AboutSection />
+      <ConsultationSection onConsult={onConsult} />
+    </div>
+  );
+}
+
+function NotFoundPage() {
+  const navigate = useNavigate();
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center text-center px-6">
+      <p className="text-white/20 text-7xl font-bold mb-4">404</p>
+      <p className="text-white/50 text-base mb-6">Page not found.</p>
+      <button onClick={() => navigate("/")} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors">
+        Back to Home
+      </button>
+    </div>
+  );
+}
+
+// ─── Root layout ───────────────────────────────────────────────────────────
+
+function Root() {
   const [consultOpen, setConsultOpen] = useState(false);
   const openConsult = useCallback(() => setConsultOpen(true), []);
 
-  // Global event so any nested component can open the modal
   useEffect(() => {
     const handler = () => setConsultOpen(true);
     window.addEventListener("openConsult", handler);
@@ -2097,18 +2216,32 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#080c14] text-white" style={{ fontFamily: "'Inter', sans-serif" }}>
       <Navbar onConsult={openConsult} />
-      <HeroSection onConsult={openConsult} />
-      <ComplexitySection />
-      <GrowthOSSection onConsult={openConsult} />
-      <WhyFoundersSection />
-      <GrowthToolsSection />
-      <SolutionsSection />
-      <GrowthLabSection />
-      <AboutSection />
-      <FAQSection />
-      <ConsultationSection onConsult={openConsult} />
+      <Outlet context={openConsult} />
       <Footer />
       {consultOpen && <ConsultationModal onClose={() => setConsultOpen(false)} />}
     </div>
   );
+}
+
+// ─── Router & App ──────────────────────────────────────────────────────────
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    Component: Root,
+    children: [
+      { index: true, Component: HomePage },
+      { path: "solutions", Component: SolutionsPage },
+      { path: "growth-os", Component: GrowthOSPage },
+      { path: "insights", Component: InsightsPage },
+      { path: "insights/:slug", Component: ArticlePage },
+      { path: "payment", Component: PaymentPage },
+      { path: "contact", Component: ContactPage },
+      { path: "*", Component: NotFoundPage },
+    ],
+  },
+]);
+
+export default function App() {
+  return <RouterProvider router={router} />;
 }
