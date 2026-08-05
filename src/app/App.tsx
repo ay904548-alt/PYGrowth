@@ -1361,7 +1361,7 @@ function HeroDashboard() {
 
 // ─── Navigation ────────────────────────────────────────────────────────────
 
-const navLinks = ["Solutions", "Growth OS", "Insights", "Payment", "Contact"];
+const navLinks = ["Solutions", "Growth OS", "Insights", "Payment Portal", "Contact"];
 
 function navPath(link: string) {
   if (link === "Home") return "/";
@@ -2157,22 +2157,701 @@ function ArticlePage() {
   );
 }
 
-function PaymentPage() {
+// ─── Payment Portal ────────────────────────────────────────────────────────
+
+const individualServices = [
+  {
+    id: "catalog",
+    name: "Product Catalog Creation",
+    desc: "Professional product listings with SEO-optimized titles, descriptions, attributes and images.",
+    price: "₹30 per SKU",
+    hasQty: true,
+  },
+  {
+    id: "advertising",
+    name: "Advertising & Campaign Management",
+    desc: "Campaign setup, keyword research, bid optimization and reporting.",
+    price: "₹7,000 / month",
+    hasQty: false,
+  },
+  {
+    id: "pricing",
+    name: "Pricing & Inventory Management",
+    desc: "Inventory planning, pricing optimization and sales analysis.",
+    price: "₹3,000 / month",
+    hasQty: false,
+  },
+  {
+    id: "brand",
+    name: "Brand & Marketplace Approvals",
+    desc: "Brand registration, listing approvals and marketplace compliance.",
+    price: "Starting ₹5,000",
+    hasQty: false,
+  },
+];
+
+const managementPlans = [
+  { id: "plan-1m", duration: "1 Month", price: "₹15,000", desc: "Complete catalog, inventory, pricing, ads, sales strategy, and account monitoring." },
+  { id: "plan-2m", duration: "2 Months", price: "₹20,000", desc: "External strategic oversight, performance optimization, business reports, and analytics." },
+  { id: "plan-3m", duration: "3 Months", price: "₹25,000", desc: "Long term brand scaling, dedicated brand growth consultation, and total marketplace management." },
+];
+
+function ServiceCard({
+  name, desc, price, hasQty, selected, qty, onToggle, onQtyChange,
+}: {
+  name: string; desc: string; price: string;
+  hasQty?: boolean; selected: boolean; qty: number;
+  onToggle: () => void; onQtyChange: (q: number) => void;
+}) {
   return (
-    <div className="min-h-screen pt-24 pb-20 flex items-center justify-center">
-      <div className="max-w-[1200px] w-full mx-auto px-6">
+    <motion.div
+      whileHover={{ y: -3 }}
+      transition={{ duration: 0.18 }}
+      onClick={onToggle}
+      className="relative rounded-[18px] border p-6 cursor-pointer transition-all duration-200 flex flex-col gap-4"
+      style={{
+        background: selected ? "rgba(99,102,241,0.06)" : "#0c1221",
+        borderColor: selected ? "rgba(99,102,241,0.5)" : "rgba(255,255,255,0.07)",
+      }}
+    >
+      <div
+        className="absolute top-4 right-4 w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-150"
+        style={{
+          background: selected ? "#6366f1" : "transparent",
+          borderColor: selected ? "#6366f1" : "rgba(255,255,255,0.2)",
+        }}
+      >
+        {selected && <CheckCircle size={12} className="text-white" strokeWidth={3} />}
+      </div>
+
+      <div className="space-y-2 pr-6">
+        <p className="text-sm font-semibold text-white leading-snug">{name}</p>
+        <p className="text-xs text-white/40 leading-relaxed">{desc}</p>
+      </div>
+
+      <div className="mt-auto space-y-3">
+        <p className="text-sm font-semibold text-indigo-400">{price}</p>
+        <AnimatePresence>
+          {hasQty && selected && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-2 pt-1">
+                <label className="text-xs text-white/40">SKU Qty:</label>
+                <button
+                  onClick={() => onQtyChange(Math.max(1, qty - 1))}
+                  className="w-6 h-6 rounded-md bg-white/8 hover:bg-white/15 text-white/60 hover:text-white flex items-center justify-center text-sm transition-colors"
+                >−</button>
+                <span className="w-8 text-center text-sm text-white font-medium">{qty}</span>
+                <button
+                  onClick={() => onQtyChange(qty + 1)}
+                  className="w-6 h-6 rounded-md bg-white/8 hover:bg-white/15 text-white/60 hover:text-white flex items-center justify-center text-sm transition-colors"
+                >+</button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+}
+
+function PlanCard({
+  id, duration, price, desc, selected, onSelect,
+}: {
+  id: string; duration: string; price: string; desc: string; selected: boolean; onSelect: () => void;
+}) {
+  return (
+    <motion.div
+      whileHover={{ y: -3 }}
+      transition={{ duration: 0.18 }}
+      onClick={onSelect}
+      className="relative rounded-[18px] border p-6 cursor-pointer transition-all duration-200 flex flex-col gap-3 h-full"
+      style={{
+        background: selected ? "rgba(99,102,241,0.06)" : "#0c1221",
+        borderColor: selected ? "rgba(99,102,241,0.5)" : "rgba(255,255,255,0.07)",
+      }}
+    >
+      <div
+        className="absolute top-4 right-4 w-5 h-5 rounded-full border flex items-center justify-center transition-all duration-150"
+        style={{
+          background: selected ? "#6366f1" : "transparent",
+          borderColor: selected ? "#6366f1" : "rgba(255,255,255,0.2)",
+        }}
+      >
+        {selected && <div className="w-2 h-2 rounded-full bg-white" />}
+      </div>
+      <p className="text-sm font-semibold text-white pr-6">{duration}</p>
+      <p className="text-xl font-semibold text-indigo-400">{price}</p>
+      <p className="text-xs text-white/40 leading-relaxed">{desc}</p>
+    </motion.div>
+  );
+}
+
+// Numeric base prices for calculation
+const serviceBasePrice: Record<string, number> = {
+  catalog: 30,       // per SKU × qty
+  advertising: 7000,
+  pricing: 3000,
+  brand: 5000,
+};
+const planBasePrice: Record<string, number> = {
+  "plan-1m": 15000,
+  "plan-2m": 20000,
+  "plan-3m": 25000,
+};
+
+function fmt(n: number) {
+  return "₹" + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// ── Razorpay Key ID (public — safe in frontend) ───────────────────────────────
+// To update: change only this constant. The Secret Key lives in Supabase Secrets.
+const RAZORPAY_KEY_ID = "rzp_live_TIEDxqua3lfAOc";
+
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4d3Rlc3J2dmxhbW1ycHRhYmVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NTIzMjksImV4cCI6MjEwMTQyODMyOX0.UAAeuvHktJJYNuB1Nkgw_vYPbpX4U5UOxcZFBVi5xCs";
+const SUPABASE_FUNCTION_BASE =
+  "https://pxwtesrvvlammrptabep.supabase.co/functions/v1/make-server-3ba67fd8";
+const CREATE_ORDER_URL  = `${SUPABASE_FUNCTION_BASE}/create-razorpay-order`;
+const VERIFY_URL        = `${SUPABASE_FUNCTION_BASE}/verify-razorpay-payment`;
+
+// ── Razorpay global type ──────────────────────────────────────────────────────
+declare global {
+  interface Window {
+    Razorpay: new (options: Record<string, unknown>) => { open(): void };
+  }
+}
+
+interface PaymentResult {
+  paymentId:   string;
+  orderId:     string;
+  customerName: string;
+  amount:      number;
+  paidAt:      Date;
+  services:    string[];
+}
+
+function PaymentPage() {
+  const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [skuQty, setSkuQty] = useState(1);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", company: "" });
+  const [ordering, setOrdering] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+
+  // Load Razorpay checkout script once
+  useEffect(() => {
+    if (document.getElementById("razorpay-script")) return;
+    const script = document.createElement("script");
+    script.id  = "razorpay-script";
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
+  const toggleService = (id: string) => {
+    setSelectedServices((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  // Compute subtotal — unchanged from existing logic
+  const subtotal = (() => {
+    let total = 0;
+    selectedServices.forEach((id) => {
+      total += id === "catalog" ? serviceBasePrice.catalog * skuQty : (serviceBasePrice[id] ?? 0);
+    });
+    if (selectedPlan) total += planBasePrice[selectedPlan] ?? 0;
+    return total;
+  })();
+  const gst = subtotal * 0.18;
+  const grandTotal = subtotal + gst;
+  const hasSelection = selectedServices.size > 0 || selectedPlan !== null;
+
+  const handleProceed = async () => {
+    setOrderError(null);
+
+    // Field validation
+    if (!form.name.trim()) { setOrderError("Please enter your full name."); return; }
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setOrderError("Please enter a valid email address."); return;
+    }
+    if (!form.phone.trim()) { setOrderError("Please enter your phone number."); return; }
+    if (!hasSelection) { setOrderError("Please select at least one service."); return; }
+
+    // Build human-readable service list for notes + success screen
+    const serviceLabels: string[] = [];
+    selectedServices.forEach((id) => {
+      const svc = individualServices.find((s) => s.id === id);
+      if (svc) serviceLabels.push(id === "catalog" ? `${svc.name} (×${skuQty} SKUs)` : svc.name);
+    });
+    if (selectedPlan) {
+      const plan = managementPlans.find((p) => p.id === selectedPlan);
+      if (plan) serviceLabels.push(`Complete Marketplace Management — ${plan.duration}`);
+    }
+
+    setOrdering(true);
+    try {
+      // Step 1: create Razorpay order on the server (Secret Key never leaves backend)
+      const orderRes = await fetch(CREATE_ORDER_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          customerName:     form.name.trim(),
+          email:            form.email.trim(),
+          phone:            form.phone.trim(),
+          companyName:      form.company.trim(),
+          selectedServices: serviceLabels,
+          grandTotal,
+        }),
+      });
+
+      const orderData = await orderRes.json();
+      if (!orderData.success) {
+        setOrderError(orderData.message ?? "Failed to create payment order. Please try again.");
+        return;
+      }
+
+      // Step 2: open Razorpay checkout popup
+      const rzp = new window.Razorpay({
+        key:         RAZORPAY_KEY_ID,
+        amount:      orderData.amount,    // paise from server
+        currency:    orderData.currency,
+        name:        "PY Growth",
+        image:       logoSrc,
+        order_id:    orderData.order_id,
+        prefill: {
+          name:    form.name.trim(),
+          email:   form.email.trim(),
+          contact: form.phone.trim(),
+        },
+        theme: { color: "#6366f1" },
+
+        handler: async (response: {
+          razorpay_order_id:   string;
+          razorpay_payment_id: string;
+          razorpay_signature:  string;
+        }) => {
+          // Step 3: verify signature on server before showing success
+          try {
+            const verifyRes = await fetch(VERIFY_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type":  "application/json",
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+              },
+              body: JSON.stringify({
+                order_id:   response.razorpay_order_id,
+                payment_id: response.razorpay_payment_id,
+                signature:  response.razorpay_signature,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+
+            if (verifyData.verified) {
+              setPaymentResult({
+                paymentId:    response.razorpay_payment_id,
+                orderId:      response.razorpay_order_id,
+                customerName: form.name.trim(),
+                amount:       grandTotal,
+                paidAt:       new Date(),
+                services:     serviceLabels,
+              });
+            } else {
+              setOrderError("Payment received but verification failed. Please contact support with your Payment ID: " + response.razorpay_payment_id);
+            }
+          } catch {
+            setOrderError("Payment received but could not be verified. Please contact support.");
+          }
+          setOrdering(false);
+        },
+
+        modal: {
+          ondismiss: () => {
+            setOrdering(false);
+            setOrderError("Payment was cancelled. Your selections are saved — you can try again.");
+          },
+        },
+      });
+
+      rzp.open();
+      // Note: setOrdering(false) is called inside handler/ondismiss, not here,
+      // because the checkout popup is async and runs after this function returns.
+
+    } catch (err) {
+      console.error("handleProceed error:", err);
+      setOrderError("Network error. Please check your connection and try again.");
+      setOrdering(false);
+    }
+  };
+
+  // ── Payment Success Screen ────────────────────────────────────────────────
+  if (paymentResult) {
+    const { paymentId, orderId, customerName, amount, paidAt, services } = paymentResult;
+    const dateStr = paidAt.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
+    const timeStr = paidAt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+    return (
+      <div className="min-h-screen pt-24 pb-24 bg-[#080c14]">
+        <div className="max-w-[680px] mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="text-center mb-10 space-y-3"
+          >
+            <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-5">
+              <CheckCircle size={26} className="text-emerald-400" />
+            </div>
+            <h1 className="text-3xl font-semibold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Payment Successful
+            </h1>
+            <p className="text-white/40 text-sm">
+              Thank you, {customerName}. Your payment has been received and verified.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="rounded-[20px] border border-white/8 bg-[#0c1221] p-7 space-y-6"
+          >
+            {/* Amount */}
+            <div className="text-center border-b border-white/6 pb-6">
+              <p className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-2">Amount Paid</p>
+              <p className="text-4xl font-semibold text-indigo-400" style={{ fontFamily: "'Playfair Display', serif" }}>
+                {fmt(amount)}
+              </p>
+            </div>
+
+            {/* Details grid */}
+            <div className="space-y-4">
+              {[
+                { label: "Payment ID",  value: paymentId },
+                { label: "Order ID",    value: orderId },
+                { label: "Customer",    value: customerName },
+                { label: "Date & Time", value: `${dateStr} at ${timeStr}` },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                  <span className="text-xs text-white/35 shrink-0">{label}</span>
+                  <span className="text-sm text-white/70 sm:text-right font-mono break-all">{value}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Services */}
+            <div className="border-t border-white/6 pt-5">
+              <p className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-3">Services Purchased</p>
+              <div className="space-y-2">
+                {services.map((s, i) => (
+                  <div key={i} className="flex items-start gap-2 text-sm text-white/60">
+                    <CheckCircle size={13} className="text-emerald-500/60 shrink-0 mt-0.5" />
+                    {s}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.25 }}
+            className="text-center text-xs text-white/25 mt-8"
+          >
+            A confirmation will be sent to your registered email. For any queries, contact us at{" "}
+            <span className="text-white/40">info@pygrowth.in</span>
+          </motion.p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen pt-24 pb-24 bg-[#080c14]">
+      <div className="max-w-[1200px] mx-auto px-6">
+
+        {/* ── Hero ── */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center space-y-4"
+          className="text-center mb-14 space-y-4"
         >
-          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-indigo-400">Payment</span>
           <h1 className="text-3xl md:text-4xl font-semibold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
-            Payment
+            Secure Payment Portal
           </h1>
-          <p className="text-white/30 text-sm">Content coming soon.</p>
+          <p className="text-white/40 text-sm max-w-md mx-auto leading-relaxed">
+            Review your selected services and complete your payment securely.
+          </p>
         </motion.div>
+
+        {/* ── Services ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="mb-10"
+        >
+          <div className="mb-6 space-y-1">
+            <h2 className="text-xl font-semibold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Choose Your Services
+            </h2>
+            <p className="text-xs text-white/35">Select one or more services below. You may also choose a management plan.</p>
+          </div>
+
+          <p className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-4">Individual Services</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            {individualServices.map((s) => (
+              <ServiceCard
+                key={s.id}
+                {...s}
+                selected={selectedServices.has(s.id)}
+                qty={skuQty}
+                onToggle={() => toggleService(s.id)}
+                onQtyChange={setSkuQty}
+              />
+            ))}
+          </div>
+
+          <p className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-4">Complete Marketplace Management Plans</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
+            {managementPlans.map((p) => (
+              <PlanCard
+                key={p.id}
+                {...p}
+                selected={selectedPlan === p.id}
+                onSelect={() => setSelectedPlan(selectedPlan === p.id ? null : p.id)}
+              />
+            ))}
+          </div>
+        </motion.div>
+
+        {/* ── Payment Summary ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mb-12"
+        >
+          <div className="rounded-[20px] border border-white/8 bg-[#0c1221] p-7">
+            <h3 className="text-base font-semibold text-white mb-6" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Payment Summary
+            </h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-3">Selected Services</p>
+                <AnimatePresence initial={false}>
+                  {!hasSelection ? (
+                    <motion.p
+                      key="empty"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-xs text-white/25 italic"
+                    >
+                      No services selected.
+                    </motion.p>
+                  ) : (
+                    <>
+                      {[...selectedServices].map((id) => {
+                        const svc = individualServices.find((s) => s.id === id);
+                        if (!svc) return null;
+                        const linePrice = id === "catalog"
+                          ? serviceBasePrice.catalog * skuQty
+                          : serviceBasePrice[id];
+                        return (
+                          <motion.div
+                            key={id}
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -6 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex items-start justify-between text-sm gap-4"
+                          >
+                            <div>
+                              <span className="text-white/60">{svc.name}</span>
+                              {id === "catalog" && (
+                                <span className="text-white/30 text-xs ml-2">× {skuQty} SKU</span>
+                              )}
+                            </div>
+                            <span className="text-white/60 shrink-0">{fmt(linePrice)}</span>
+                          </motion.div>
+                        );
+                      })}
+                      <AnimatePresence>
+                        {selectedPlan && (() => {
+                          const plan = managementPlans.find((p) => p.id === selectedPlan);
+                          return plan ? (
+                            <motion.div
+                              key={selectedPlan}
+                              initial={{ opacity: 0, y: -6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -6 }}
+                              transition={{ duration: 0.2 }}
+                              className="flex items-center justify-between text-sm"
+                            >
+                              <span className="text-white/60">Management Plan — {plan.duration}</span>
+                              <span className="text-white/60">{fmt(planBasePrice[plan.id])}</span>
+                            </motion.div>
+                          ) : null;
+                        })()}
+                      </AnimatePresence>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+              <div className="border-t border-white/6 pt-4 space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-white/40">Subtotal</span>
+                  <motion.span
+                    key={subtotal}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.25 }}
+                    className="text-white/60"
+                  >
+                    {hasSelection ? fmt(subtotal) : "—"}
+                  </motion.span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-white/40">GST (18%)</span>
+                  <motion.span
+                    key={gst}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.25 }}
+                    className="text-white/60"
+                  >
+                    {hasSelection ? fmt(gst) : "—"}
+                  </motion.span>
+                </div>
+                <div className="flex items-center justify-between text-sm border-t border-white/6 pt-3">
+                  <span className="text-white font-semibold">Total Payable</span>
+                  <motion.span
+                    key={grandTotal}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.25 }}
+                    className="text-indigo-400 font-semibold text-base"
+                  >
+                    {hasSelection ? fmt(grandTotal) : "—"}
+                  </motion.span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ── Step 2: Client Details ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="mb-8"
+        >
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Client Details
+            </h2>
+          </div>
+          <div className="rounded-[20px] border border-white/8 bg-[#0c1221] p-7">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {[
+                { key: "name", label: "Full Name", placeholder: "Your full name", type: "text" },
+                { key: "email", label: "Email Address", placeholder: "you@company.com", type: "email" },
+                { key: "phone", label: "Phone Number", placeholder: "+91 98765 43210", type: "tel" },
+                { key: "company", label: "Company / Brand Name", placeholder: "Your brand or company", type: "text" },
+              ].map((field) => (
+                <div key={field.key} className="flex flex-col gap-2">
+                  <label className="text-xs font-medium text-white/50">{field.label}</label>
+                  <input
+                    type={field.type}
+                    placeholder={field.placeholder}
+                    value={form[field.key as keyof typeof form]}
+                    onChange={(e) => setForm((f) => ({ ...f, [field.key]: e.target.value }))}
+                    className="rounded-xl border border-white/10 bg-[#131928] px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-200"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ── Proceed Button ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mb-6 space-y-3"
+        >
+          {/* Error feedback */}
+          <AnimatePresence>
+            {orderError && (
+              <motion.div
+                key="error"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2 }}
+                className="rounded-xl border border-red-500/25 bg-red-500/8 px-4 py-3 text-xs text-red-400 flex items-center gap-2"
+              >
+                <AlertCircle size={13} className="shrink-0" />
+                {orderError}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <button
+            disabled={!hasSelection || ordering}
+            onClick={handleProceed}
+            className="w-full py-4 text-white font-medium rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none bg-indigo-600 enabled:hover:bg-indigo-500 enabled:hover:shadow-lg enabled:hover:shadow-indigo-600/25 enabled:hover:-translate-y-0.5"
+          >
+            {ordering ? (
+              <>
+                <Loader size={15} className="animate-spin" />
+                Opening Payment…
+              </>
+            ) : (
+              <>
+                Proceed to Secure Payment <ArrowRight size={16} />
+              </>
+            )}
+          </button>
+        </motion.div>
+
+        {/* ── Trust badges ── */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.35 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-2"
+        >
+          {[
+            "Payments Powered by Razorpay",
+            "SSL Secured",
+            "256-bit Encryption",
+          ].map((badge) => (
+            <div key={badge} className="flex items-center gap-2 text-xs text-white/30">
+              <CheckCircle size={12} className="text-emerald-500/60 shrink-0" />
+              {badge}
+            </div>
+          ))}
+        </motion.div>
+
       </div>
     </div>
   );
@@ -2235,7 +2914,7 @@ const router = createBrowserRouter([
       { path: "growth-os", Component: GrowthOSPage },
       { path: "insights", Component: InsightsPage },
       { path: "insights/:slug", Component: ArticlePage },
-      { path: "payment", Component: PaymentPage },
+      { path: "payment-portal", Component: PaymentPage },
       { path: "contact", Component: ContactPage },
       { path: "*", Component: NotFoundPage },
     ],
