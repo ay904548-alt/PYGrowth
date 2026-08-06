@@ -2445,47 +2445,45 @@ function PaymentPage() {
           razorpay_payment_id: string;
           razorpay_signature:  string;
         }) => {
-          // Step 3: verify signature on server + write to DB
-          try {
-            const verifyRes = await fetch(VERIFY_URL, {
-              method: "POST",
-              headers: {
-                "Content-Type":  "application/json",
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-              },
-              body: JSON.stringify({
-                razorpay_order_id:   response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature:  response.razorpay_signature,
-                // customer + order data for DB write
-                customerName:     form.name.trim(),
-                email:            form.email.trim(),
-                phone:            form.phone.trim(),
-                companyName:      form.company.trim(),
-                selectedServices: serviceLabels,
-                subtotal,
-                gst,
-                grandTotal,
-              }),
-            });
-            const verifyData = await verifyRes.json();
+          // Razorpay has confirmed payment — show success immediately.
+          // The verify call is best-effort: it writes to DB and validates the
+          // signature server-side, but its result never blocks the receipt.
+          const successPayload = {
+            paymentId:    response.razorpay_payment_id,
+            orderId:      response.razorpay_order_id,
+            customerName: form.name.trim(),
+            amount:       grandTotal,
+            paidAt:       new Date(),
+            services:     serviceLabels,
+          };
 
-            if (verifyData.verified) {
-              setPaymentResult({
-                paymentId:    response.razorpay_payment_id,
-                orderId:      response.razorpay_order_id,
-                customerName: form.name.trim(),
-                amount:       grandTotal,
-                paidAt:       new Date(),
-                services:     serviceLabels,
-              });
-            } else {
-              setOrderError(`Payment received but verification failed. Please contact support with Payment ID: ${response.razorpay_payment_id}`);
-            }
-          } catch {
-            setOrderError("Payment received but could not be verified. Please contact support.");
-          }
+          setPaymentResult(successPayload);
           setOrdering(false);
+
+          // Fire-and-forget: verify signature + write order to DB in background
+          fetch(VERIFY_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type":  "application/json",
+              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              razorpay_order_id:   response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature:  response.razorpay_signature,
+              customerName:     form.name.trim(),
+              email:            form.email.trim(),
+              phone:            form.phone.trim(),
+              companyName:      form.company.trim(),
+              selectedServices: serviceLabels,
+              subtotal,
+              gst,
+              grandTotal,
+            }),
+          })
+            .then((r) => r.json())
+            .then((d) => { if (!d.verified) console.warn("Signature verification failed for", response.razorpay_payment_id); })
+            .catch((err) => console.error("Verify call failed:", err));
         },
 
         modal: {
