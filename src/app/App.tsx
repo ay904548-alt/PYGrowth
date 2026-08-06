@@ -2299,6 +2299,7 @@ const serviceBasePrice: Record<string, number> = {
   advertising: 7000,
   pricing: 3000,
   brand: 5000,
+  _test: 1,
 };
 const planBasePrice: Record<string, number> = {
   "plan-1m": 15000,
@@ -2444,7 +2445,7 @@ function PaymentPage() {
           razorpay_payment_id: string;
           razorpay_signature:  string;
         }) => {
-          // Step 3: verify signature on server before showing success
+          // Step 3: verify signature on server + write to DB
           try {
             const verifyRes = await fetch(VERIFY_URL, {
               method: "POST",
@@ -2453,9 +2454,18 @@ function PaymentPage() {
                 "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
               },
               body: JSON.stringify({
-                order_id:   response.razorpay_order_id,
-                payment_id: response.razorpay_payment_id,
-                signature:  response.razorpay_signature,
+                razorpay_order_id:   response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature:  response.razorpay_signature,
+                // customer + order data for DB write
+                customerName:     form.name.trim(),
+                email:            form.email.trim(),
+                phone:            form.phone.trim(),
+                companyName:      form.company.trim(),
+                selectedServices: serviceLabels,
+                subtotal,
+                gst,
+                grandTotal,
               }),
             });
             const verifyData = await verifyRes.json();
@@ -2470,7 +2480,7 @@ function PaymentPage() {
                 services:     serviceLabels,
               });
             } else {
-              setOrderError("Payment received but verification failed. Please contact support with your Payment ID: " + response.razorpay_payment_id);
+              setOrderError(`Payment received but verification failed. Please contact support with Payment ID: ${response.razorpay_payment_id}`);
             }
           } catch {
             setOrderError("Payment received but could not be verified. Please contact support.");
@@ -2502,6 +2512,60 @@ function PaymentPage() {
     const { paymentId, orderId, customerName, amount, paidAt, services } = paymentResult;
     const dateStr = paidAt.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
     const timeStr = paidAt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+
+    const downloadReceipt = () => {
+      const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Payment Receipt — PY Growth</title>
+  <style>
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #111; margin: 0; padding: 40px; }
+    .header { border-bottom: 2px solid #6366f1; padding-bottom: 20px; margin-bottom: 28px; }
+    .brand { font-size: 22px; font-weight: 700; color: #6366f1; }
+    .title  { font-size: 15px; color: #555; margin-top: 4px; }
+    .badge  { display: inline-block; background: #d1fae5; color: #065f46; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-top: 8px; }
+    .amount { font-size: 36px; font-weight: 700; color: #6366f1; margin: 24px 0 8px; }
+    table   { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    td      { padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+    td:first-child { color: #888; width: 160px; }
+    td:last-child  { color: #111; font-weight: 500; word-break: break-all; }
+    .services { margin-top: 24px; }
+    .services h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 10px; }
+    .services li { font-size: 13px; margin-bottom: 6px; color: #333; }
+    .footer { margin-top: 40px; font-size: 11px; color: #aaa; border-top: 1px solid #eee; padding-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">PY Growth</div>
+    <div class="title">Payment Receipt</div>
+    <div class="badge">✓ Payment Verified</div>
+  </div>
+  <div class="amount">${fmt(amount)}</div>
+  <table>
+    <tr><td>Payment ID</td><td>${paymentId}</td></tr>
+    <tr><td>Order ID</td><td>${orderId}</td></tr>
+    <tr><td>Customer</td><td>${customerName}</td></tr>
+    <tr><td>Date &amp; Time</td><td>${dateStr} at ${timeStr}</td></tr>
+  </table>
+  <div class="services">
+    <h3>Services Purchased</h3>
+    <ul>${services.map((s) => `<li>${s}</li>`).join("")}</ul>
+  </div>
+  <div class="footer">
+    PY Growth · info@pygrowth.in · This is a computer-generated receipt and does not require a signature.
+  </div>
+</body>
+</html>`;
+      const win = window.open("", "_blank");
+      if (!win) return;
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      setTimeout(() => { win.print(); }, 400);
+    };
+
     return (
       <div className="min-h-screen pt-24 pb-24 bg-[#080c14]">
         <div className="max-w-[680px] mx-auto px-6">
@@ -2536,7 +2600,7 @@ function PaymentPage() {
               </p>
             </div>
 
-            {/* Details grid */}
+            {/* Details */}
             <div className="space-y-4">
               {[
                 { label: "Payment ID",  value: paymentId },
@@ -2565,10 +2629,33 @@ function PaymentPage() {
             </div>
           </motion.div>
 
+          {/* Action buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex flex-col sm:flex-row gap-3 mt-6"
+          >
+            <button
+              onClick={downloadReceipt}
+              className="flex-1 py-3 rounded-xl border border-indigo-500/30 bg-indigo-500/8 text-indigo-400 text-sm font-medium hover:bg-indigo-500/15 hover:border-indigo-500/50 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <ArrowRight size={14} className="rotate-90" />
+              Download Receipt (PDF)
+            </button>
+            <Link
+              to="/"
+              className="flex-1 py-3 rounded-xl border border-white/10 bg-white/4 text-white/60 text-sm font-medium hover:bg-white/8 hover:text-white/80 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <ChevronLeft size={14} />
+              Back to Home
+            </Link>
+          </motion.div>
+
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.25 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
             className="text-center text-xs text-white/25 mt-8"
           >
             A confirmation will be sent to your registered email. For any queries, contact us at{" "}
@@ -2636,6 +2723,19 @@ function PaymentPage() {
                 onSelect={() => setSelectedPlan(selectedPlan === p.id ? null : p.id)}
               />
             ))}
+          </div>
+
+          {/* dev-only test ₹1 option — remove before production */}
+          <div className="mt-6 flex justify-end">
+            <label className="flex items-center gap-1.5 cursor-pointer select-none group">
+              <input
+                type="checkbox"
+                checked={selectedServices.has("_test")}
+                onChange={() => toggleService("_test")}
+                className="w-3 h-3 accent-indigo-500 opacity-30 group-hover:opacity-60 transition-opacity"
+              />
+              <span className="text-[10px] text-white/15 group-hover:text-white/30 transition-colors">Test</span>
+            </label>
           </div>
         </motion.div>
 
