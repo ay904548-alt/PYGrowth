@@ -2583,7 +2583,7 @@ function PaymentPage() {
     }
     .header-left { display: flex; align-items: flex-start; gap: 14px; }
     .logo-mark {
-      width: 72px; height: 72px;
+      width: 100px; height: 100px;
       flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
     }
@@ -2816,7 +2816,6 @@ function PaymentPage() {
   <!-- ── PAYMENT SUMMARY ── -->
   <div class="summary-wrap">
     <div class="thank-you">
-      <div class="thank-you-title">Thank You</div>
       <div class="thank-you-body">
         <strong>Thank you for choosing PY Growth.</strong>
         We truly appreciate your trust in us and look forward to helping your business grow.
