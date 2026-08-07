@@ -220,7 +220,44 @@ app.post("/make-server-3ba67fd8/verify-razorpay-payment", async (c) => {
       }
     }
 
-    return c.json({ success: true, verified: true });
+    // ── Fetch payment method from Razorpay ───────────────────────────────────
+    let paymentMethod = "Online Payment";
+    try {
+      const keyId = Deno.env.get("RAZORPAY_KEY_ID");
+      if (keyId) {
+        const pmRes = await fetch(`https://api.razorpay.com/v1/payments/${razorpay_payment_id}`, {
+          headers: { "Authorization": `Basic ${btoa(`${keyId}:${keySecret}`)}` },
+        });
+        if (pmRes.ok) {
+          const pm = await pmRes.json();
+          if (pm.method === "upi") {
+            const vpa: string = pm.vpa ?? pm.upi_transaction_id ?? "";
+            if (vpa.includes("ybl") || vpa.includes("phonepe")) paymentMethod = "PhonePe (UPI)";
+            else if (vpa.includes("okaxis") || vpa.includes("oksbi") || vpa.includes("okicici") || vpa.includes("okhdfcbank")) paymentMethod = "Google Pay (UPI)";
+            else if (vpa.includes("paytm")) paymentMethod = "Paytm (UPI)";
+            else paymentMethod = "UPI";
+          } else if (pm.method === "card") {
+            const cardType: string = pm.card?.type ?? "";
+            const network: string  = pm.card?.network ?? "";
+            paymentMethod = cardType === "credit" ? "Credit Card" : "Debit Card";
+            if (network) paymentMethod += ` (${network})`;
+          } else if (pm.method === "netbanking") {
+            paymentMethod = pm.bank ? `Net Banking (${pm.bank})` : "Net Banking";
+          } else if (pm.method === "wallet") {
+            const w: string = pm.wallet ?? "";
+            paymentMethod = w ? w.charAt(0).toUpperCase() + w.slice(1) : "Wallet";
+          } else if (pm.method === "emi") {
+            paymentMethod = "EMI";
+          } else if (pm.method) {
+            paymentMethod = pm.method.charAt(0).toUpperCase() + pm.method.slice(1);
+          }
+        }
+      }
+    } catch (pmErr) {
+      console.error("Failed to fetch payment method:", pmErr);
+    }
+
+    return c.json({ success: true, verified: true, paymentMethod });
   } catch (err) {
     console.error("verify-razorpay-payment error:", err);
     return c.json({ success: false, verified: false, message: "Internal server error." }, 500);

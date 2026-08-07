@@ -2332,12 +2332,13 @@ declare global {
 }
 
 interface PaymentResult {
-  paymentId:   string;
-  orderId:     string;
-  customerName: string;
-  amount:      number;
-  paidAt:      Date;
-  services:    string[];
+  paymentId:     string;
+  orderId:       string;
+  customerName:  string;
+  amount:        number;
+  paidAt:        Date;
+  services:      string[];
+  paymentMethod?: string;
 }
 
 function PaymentPage() {
@@ -2462,7 +2463,7 @@ function PaymentPage() {
           setPaymentResult(successPayload);
           setOrdering(false);
 
-          // Fire-and-forget: verify signature + write order to DB in background
+          // Background: verify signature + write to DB + fetch payment method
           fetch(VERIFY_URL, {
             method: "POST",
             headers: {
@@ -2484,7 +2485,12 @@ function PaymentPage() {
             }),
           })
             .then((r) => r.json())
-            .then((d) => { if (!d.verified) console.warn("Signature verification failed for", response.razorpay_payment_id); })
+            .then((d) => {
+              if (!d.verified) console.warn("Signature verification failed for", response.razorpay_payment_id);
+              if (d.paymentMethod) {
+                setPaymentResult((prev) => prev ? { ...prev, paymentMethod: d.paymentMethod } : prev);
+              }
+            })
             .catch((err) => console.error("Verify call failed:", err));
         },
 
@@ -2577,7 +2583,7 @@ function PaymentPage() {
     }
     .header-left { display: flex; align-items: flex-start; gap: 14px; }
     .logo-mark {
-      width: 52px; height: 52px;
+      width: 72px; height: 72px;
       flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
     }
@@ -2622,13 +2628,6 @@ function PaymentPage() {
     .card-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; gap: 8px; }
     .card-label { font-size: 10.5px; color: #8a9ab5; flex-shrink: 0; }
     .card-value { font-size: 11px; font-weight: 600; color: #1a2a44; text-align: right; word-break: break-all; }
-    .status-pill {
-      display: inline-block;
-      background: #dcfce7; color: #15803d;
-      font-size: 9.5px; font-weight: 700;
-      padding: 2px 10px; border-radius: 12px;
-      border: 1px solid #86efac;
-    }
 
     /* ── SERVICES TABLE ── */
     .section-title {
@@ -2666,8 +2665,28 @@ function PaymentPage() {
     .td-bold    { font-weight: 600 !important; color: #1a2a44 !important; }
     .qty-note   { font-size: 10px; color: #8a9ab5; font-weight: 400; }
 
+    /* ── THANK YOU ── */
+    .thank-you {
+      flex: 1;
+      padding-right: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .thank-you-title {
+      font-size: 9px; font-weight: 800;
+      color: #0f2d5e; letter-spacing: 1.8px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .thank-you-body {
+      font-size: 12px; color: #5a6a85;
+      line-height: 1.7; max-width: 260px;
+    }
+    .thank-you-body strong { display: block; font-size: 13px; color: #1a2a44; margin-bottom: 4px; }
+
     /* ── SUMMARY ── */
-    .summary-wrap { display: flex; justify-content: flex-end; margin-bottom: 28px; }
+    .summary-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
     .summary-box {
       width: 320px;
       border: 1px solid #dde4ee;
@@ -2752,10 +2771,9 @@ function PaymentPage() {
       <div class="paid-badge">✓ Paid in Full</div>
       <table class="receipt-meta">
         <tr><td>Receipt No.</td><td>${receiptNo}</td></tr>
-        <tr><td>Payment ID</td><td>${paymentId}</td></tr>
-        <tr><td>Order ID</td><td>${orderId}</td></tr>
-        <tr><td>Date Issued</td><td>${issuedDate}</td></tr>
+        <tr><td>Payment Date</td><td>${issuedDate}</td></tr>
         <tr><td>Payment Time</td><td>${issuedTime}</td></tr>
+        <tr><td>Payment Gateway</td><td>Razorpay</td></tr>
       </table>
     </div>
   </div>
@@ -2771,8 +2789,7 @@ function PaymentPage() {
     </div>
     <div class="card">
       <div class="card-title">Payment Details</div>
-      <div class="card-row"><span class="card-label">Status</span><span class="card-value"><span class="status-pill">Paid</span></span></div>
-      <div class="card-row"><span class="card-label">Gateway</span><span class="card-value">Razorpay</span></div>
+      <div class="card-row"><span class="card-label">Paid Via</span><span class="card-value">${paymentResult.paymentMethod ?? "Online Payment"}</span></div>
       <div class="card-row"><span class="card-label">Payment ID</span><span class="card-value">${paymentId}</span></div>
       <div class="card-row"><span class="card-label">Order ID</span><span class="card-value">${orderId}</span></div>
       <div class="card-row"><span class="card-label">Date</span><span class="card-value">${issuedDate}</span></div>
@@ -2798,6 +2815,13 @@ function PaymentPage() {
 
   <!-- ── PAYMENT SUMMARY ── -->
   <div class="summary-wrap">
+    <div class="thank-you">
+      <div class="thank-you-title">Thank You</div>
+      <div class="thank-you-body">
+        <strong>Thank you for choosing PY Growth.</strong>
+        We truly appreciate your trust in us and look forward to helping your business grow.
+      </div>
+    </div>
     <div class="summary-box">
       <div class="summary-row"><span class="summary-label">Subtotal</span><span class="summary-value">₹${subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
       <div class="summary-row"><span class="summary-label">GST (18%)</span><span class="summary-value">₹${gst.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
