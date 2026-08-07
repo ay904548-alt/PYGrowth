@@ -18,6 +18,8 @@ import {
 } from "recharts";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import logoSrc from "@/imports/ChatGPT_Image_Jul_5__2026__08_55_18_PM.png";
+import stampSrc from "@/imports/ChatGPT_Image_Aug_7__2026__09_21_04_PM.png";
+import logoMarkSrc from "@/imports/ChatGPT_Image_Aug_7__2026__09_17_31_PM.png";
 
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -2512,56 +2514,329 @@ function PaymentPage() {
     const timeStr = paidAt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 
     const downloadReceipt = () => {
+      // Build detailed service rows from current selection state
+      const serviceRows: Array<{ name: string; qty: number; unitPrice: number; lineSubtotal: number; lineGst: number; lineTotal: number }> = [];
+      selectedServices.forEach((id) => {
+        if (id === "_test") return; // never show test item on receipt
+        const svc = individualServices.find((s) => s.id === id);
+        if (!svc) return;
+        const unitPrice = serviceBasePrice[id] ?? 0;
+        const qty = id === "catalog" ? skuQty : 1;
+        const lineSub = unitPrice * qty;
+        serviceRows.push({ name: svc.name, qty, unitPrice, lineSubtotal: lineSub, lineGst: lineSub * 0.18, lineTotal: lineSub * 1.18 });
+      });
+      if (selectedPlan) {
+        const plan = managementPlans.find((p) => p.id === selectedPlan);
+        if (plan) {
+          const up = planBasePrice[selectedPlan] ?? 0;
+          serviceRows.push({ name: `Complete Marketplace Management — ${plan.duration}`, qty: 1, unitPrice: up, lineSubtotal: up, lineGst: up * 0.18, lineTotal: up * 1.18 });
+        }
+      }
+
+      const receiptNo = `RCP-${paidAt.getFullYear()}${String(paidAt.getMonth() + 1).padStart(2, "0")}-${paymentId.slice(-8).toUpperCase()}`;
+      const issuedDate = paidAt.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
+      const issuedTime = paidAt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+
+      const serviceTableRows = serviceRows.map((r) => `
+        <tr>
+          <td class="td-service">${r.name}${r.qty > 1 ? `<span class="qty-note"> (per SKU)</span>` : ""}</td>
+          <td class="td-center">${r.qty}</td>
+          <td class="td-right">₹${r.unitPrice.toLocaleString("en-IN")}</td>
+          <td class="td-right">₹${r.lineGst.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td class="td-right td-bold">₹${r.lineTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        </tr>`).join("");
+
       const html = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <title>Payment Receipt — PY Growth</title>
   <style>
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #111; margin: 0; padding: 40px; }
-    .header { border-bottom: 2px solid #6366f1; padding-bottom: 20px; margin-bottom: 28px; }
-    .brand { font-size: 22px; font-weight: 700; color: #6366f1; }
-    .title  { font-size: 15px; color: #555; margin-top: 4px; }
-    .badge  { display: inline-block; background: #d1fae5; color: #065f46; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-top: 8px; }
-    .amount { font-size: 36px; font-weight: 700; color: #6366f1; margin: 24px 0 8px; }
-    table   { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    td      { padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-    td:first-child { color: #888; width: 160px; }
-    td:last-child  { color: #111; font-weight: 500; word-break: break-all; }
-    .services { margin-top: 24px; }
-    .services h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 10px; }
-    .services li { font-size: 13px; margin-bottom: 6px; color: #333; }
-    .footer { margin-top: 40px; font-size: 11px; color: #aaa; border-top: 1px solid #eee; padding-top: 16px; }
+    @page { size: A4 portrait; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: #ffffff;
+      color: #1a2a44;
+      width: 794px;
+      min-height: 1123px;
+      margin: 0 auto;
+      padding: 48px 52px 40px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 24px;
+      border-bottom: 2.5px solid #0f2d5e;
+      margin-bottom: 28px;
+    }
+    .header-left { display: flex; align-items: flex-start; gap: 14px; }
+    .logo-mark {
+      width: 52px; height: 52px;
+      background: #0f2d5e;
+      border-radius: 50%;
+      padding: 6px;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-mark img { width: 100%; height: 100%; object-fit: contain; filter: invert(1) brightness(2); }
+    .brand-block { display: flex; flex-direction: column; gap: 4px; }
+    .brand-name { font-size: 20px; font-weight: 800; color: #0f2d5e; letter-spacing: 1.5px; text-transform: uppercase; }
+    .brand-meta { font-size: 10.5px; color: #5a6a85; line-height: 1.7; }
+    .brand-meta span { display: block; }
+
+    .header-right { text-align: right; }
+    .receipt-title { font-size: 22px; font-weight: 800; color: #0f2d5e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    .paid-badge {
+      display: inline-block;
+      background: #dcfce7; color: #15803d;
+      font-size: 10px; font-weight: 700;
+      padding: 4px 14px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: 1px;
+      border: 1px solid #86efac;
+      margin-bottom: 12px;
+    }
+    .receipt-meta { font-size: 11px; color: #5a6a85; }
+    .receipt-meta tr td:first-child { color: #8a9ab5; padding-right: 12px; padding-bottom: 3px; text-align: right; }
+    .receipt-meta tr td:last-child { color: #1a2a44; font-weight: 600; }
+
+    /* ── TWO-COLUMN CARDS ── */
+    .cards-row { display: flex; gap: 16px; margin-bottom: 22px; }
+    .card {
+      flex: 1;
+      background: #f4f7fb;
+      border: 1px solid #dde4ee;
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .card-title {
+      font-size: 9px; font-weight: 800;
+      color: #0f2d5e; letter-spacing: 1.8px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1.5px solid #0f2d5e22;
+    }
+    .card-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; gap: 8px; }
+    .card-label { font-size: 10.5px; color: #8a9ab5; flex-shrink: 0; }
+    .card-value { font-size: 11px; font-weight: 600; color: #1a2a44; text-align: right; word-break: break-all; }
+    .status-pill {
+      display: inline-block;
+      background: #dcfce7; color: #15803d;
+      font-size: 9.5px; font-weight: 700;
+      padding: 2px 10px; border-radius: 12px;
+      border: 1px solid #86efac;
+    }
+
+    /* ── SERVICES TABLE ── */
+    .section-title {
+      font-size: 9px; font-weight: 800;
+      color: #0f2d5e; letter-spacing: 1.8px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .services-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 22px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #dde4ee;
+    }
+    .services-table thead tr {
+      background: #0f2d5e;
+    }
+    .services-table thead th {
+      padding: 10px 12px;
+      font-size: 9.5px; font-weight: 700;
+      color: #ffffff; letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .services-table thead th:first-child { text-align: left; }
+    .services-table thead th:not(:first-child) { text-align: right; }
+    .services-table tbody tr { border-bottom: 1px solid #e8edf5; }
+    .services-table tbody tr:last-child { border-bottom: none; }
+    .services-table tbody tr:nth-child(even) { background: #f9fafc; }
+    .services-table tbody tr:nth-child(odd)  { background: #ffffff; }
+    .td-service { padding: 11px 12px; font-size: 12px; color: #1a2a44; font-weight: 500; }
+    .td-center  { padding: 11px 12px; font-size: 12px; color: #5a6a85; text-align: right; }
+    .td-right   { padding: 11px 12px; font-size: 12px; color: #5a6a85; text-align: right; }
+    .td-bold    { font-weight: 600 !important; color: #1a2a44 !important; }
+    .qty-note   { font-size: 10px; color: #8a9ab5; font-weight: 400; }
+
+    /* ── SUMMARY ── */
+    .summary-wrap { display: flex; justify-content: flex-end; margin-bottom: 28px; }
+    .summary-box {
+      width: 320px;
+      border: 1px solid #dde4ee;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .summary-row {
+      display: flex; justify-content: space-between;
+      padding: 9px 16px;
+      font-size: 12px;
+      border-bottom: 1px solid #e8edf5;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-label { color: #5a6a85; }
+    .summary-value { font-weight: 600; color: #1a2a44; }
+    .summary-total {
+      background: #0f2d5e;
+      display: flex; justify-content: space-between;
+      padding: 12px 16px;
+      font-size: 13px; font-weight: 700;
+      color: #ffffff;
+    }
+    .summary-paid {
+      background: #f0fdf4;
+      display: flex; justify-content: space-between;
+      padding: 11px 16px;
+      font-size: 13px; font-weight: 700;
+      color: #15803d;
+      border-top: 2px solid #86efac;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      border-top: 1.5px solid #dde4ee;
+      padding-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .footer-left { font-size: 10px; color: #8a9ab5; line-height: 1.8; }
+    .footer-left strong { color: #5a6a85; display: block; margin-bottom: 2px; }
+    .authorized-block { text-align: center; }
+    .authorized-label {
+      font-size: 9px; font-weight: 800;
+      color: #0f2d5e; letter-spacing: 1.8px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .stamp-wrap {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin: 0 auto 6px;
+      background: #05091a;
+    }
+    .stamp-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .disclaimer { font-size: 9px; color: #aab5c8; margin-top: 8px; text-align: center; max-width: 160px; line-height: 1.5; }
+
+    @media print {
+      body { width: 100%; padding: 32px 40px; }
+      .services-table { page-break-inside: avoid; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- ── HEADER ── -->
   <div class="header">
-    <div class="brand">PY Growth</div>
-    <div class="title">Payment Receipt</div>
-    <div class="badge">✓ Payment Verified</div>
+    <div class="header-left">
+      <div class="logo-mark">
+        <img src="${logoMarkSrc}" alt="PY Growth logo mark"/>
+      </div>
+      <div class="brand-block">
+        <div class="brand-name">PY Growth</div>
+        <div class="brand-meta">
+          <span>Ranchi, Jharkhand — 834001, India</span>
+          <span>info@pygrowth.in</span>
+          <span>www.pygrowth.in</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="receipt-title">Payment Receipt</div>
+      <div class="paid-badge">✓ Paid in Full</div>
+      <table class="receipt-meta">
+        <tr><td>Receipt No.</td><td>${receiptNo}</td></tr>
+        <tr><td>Payment ID</td><td>${paymentId}</td></tr>
+        <tr><td>Order ID</td><td>${orderId}</td></tr>
+        <tr><td>Date Issued</td><td>${issuedDate}</td></tr>
+        <tr><td>Payment Time</td><td>${issuedTime}</td></tr>
+      </table>
+    </div>
   </div>
-  <div class="amount">${fmt(amount)}</div>
-  <table>
-    <tr><td>Payment ID</td><td>${paymentId}</td></tr>
-    <tr><td>Order ID</td><td>${orderId}</td></tr>
-    <tr><td>Customer</td><td>${customerName}</td></tr>
-    <tr><td>Date &amp; Time</td><td>${dateStr} at ${timeStr}</td></tr>
+
+  <!-- ── BILLED TO + PAYMENT DETAILS ── -->
+  <div class="cards-row">
+    <div class="card">
+      <div class="card-title">Billed To</div>
+      <div class="card-row"><span class="card-label">Full Name</span><span class="card-value">${customerName}</span></div>
+      ${form.company ? `<div class="card-row"><span class="card-label">Company</span><span class="card-value">${form.company}</span></div>` : ""}
+      <div class="card-row"><span class="card-label">Email</span><span class="card-value">${form.email}</span></div>
+      <div class="card-row"><span class="card-label">Phone</span><span class="card-value">${form.phone}</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Payment Details</div>
+      <div class="card-row"><span class="card-label">Status</span><span class="card-value"><span class="status-pill">Paid</span></span></div>
+      <div class="card-row"><span class="card-label">Gateway</span><span class="card-value">Razorpay</span></div>
+      <div class="card-row"><span class="card-label">Payment ID</span><span class="card-value">${paymentId}</span></div>
+      <div class="card-row"><span class="card-label">Order ID</span><span class="card-value">${orderId}</span></div>
+      <div class="card-row"><span class="card-label">Date</span><span class="card-value">${issuedDate}</span></div>
+    </div>
+  </div>
+
+  <!-- ── SERVICES TABLE ── -->
+  <div class="section-title">Services Purchased</div>
+  <table class="services-table">
+    <thead>
+      <tr>
+        <th style="text-align:left;width:45%">Service</th>
+        <th>Qty</th>
+        <th>Unit Price</th>
+        <th>GST (18%)</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${serviceTableRows}
+    </tbody>
   </table>
-  <div class="services">
-    <h3>Services Purchased</h3>
-    <ul>${services.map((s) => `<li>${s}</li>`).join("")}</ul>
+
+  <!-- ── PAYMENT SUMMARY ── -->
+  <div class="summary-wrap">
+    <div class="summary-box">
+      <div class="summary-row"><span class="summary-label">Subtotal</span><span class="summary-value">₹${subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+      <div class="summary-row"><span class="summary-label">GST (18%)</span><span class="summary-value">₹${gst.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+      <div class="summary-total"><span>Grand Total</span><span>₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+      <div class="summary-paid"><span>✓ Total Paid</span><span>₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+    </div>
   </div>
+
+  <!-- ── FOOTER ── -->
   <div class="footer">
-    PY Growth · info@pygrowth.in · This is a computer-generated receipt and does not require a signature.
+    <div class="footer-left">
+      <strong>PY Growth</strong>
+      Ranchi, Jharkhand — 834001<br/>
+      info@pygrowth.in<br/>
+      www.pygrowth.in
+    </div>
+    <div class="authorized-block">
+      <div class="authorized-label">Authorized By</div>
+      <div class="stamp-wrap">
+        <img src="${stampSrc}" alt="PY Growth official seal"/>
+      </div>
+      <div class="disclaimer">This is a computer-generated payment receipt and does not require a physical signature.</div>
+    </div>
   </div>
+
 </body>
 </html>`;
+
       const win = window.open("", "_blank");
       if (!win) return;
       win.document.write(html);
       win.document.close();
       win.focus();
-      setTimeout(() => { win.print(); }, 400);
+      setTimeout(() => { win.print(); }, 500);
     };
 
     return (
