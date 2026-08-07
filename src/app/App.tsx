@@ -18,8 +18,8 @@ import {
 } from "recharts";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import logoSrc from "@/imports/ChatGPT_Image_Jul_5__2026__08_55_18_PM.png";
-import stampSrc from "@/imports/ChatGPT_Image_Aug_7__2026__09_21_04_PM.png";
-import logoMarkSrc from "@/imports/ChatGPT_Image_Aug_7__2026__09_17_31_PM.png";
+import stampSrc from "@/imports/ChatGPT_Image_Aug_7__2026__09_21_04_PM-1.png";
+import logoMarkSrc from "@/imports/ChatGPT_Image_Aug_7__2026__09_17_31_PM-1.png";
 
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -2578,13 +2578,10 @@ function PaymentPage() {
     .header-left { display: flex; align-items: flex-start; gap: 14px; }
     .logo-mark {
       width: 52px; height: 52px;
-      background: #0f2d5e;
-      border-radius: 50%;
-      padding: 6px;
       flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
     }
-    .logo-mark img { width: 100%; height: 100%; object-fit: contain; filter: invert(1) brightness(2); }
+    .logo-mark img { width: 100%; height: 100%; object-fit: contain; }
     .brand-block { display: flex; flex-direction: column; gap: 4px; }
     .brand-name { font-size: 20px; font-weight: 800; color: #0f2d5e; letter-spacing: 1.5px; text-transform: uppercase; }
     .brand-meta { font-size: 10.5px; color: #5a6a85; line-height: 1.7; }
@@ -2720,13 +2717,11 @@ function PaymentPage() {
       margin-bottom: 8px;
     }
     .stamp-wrap {
-      width: 100px; height: 100px;
-      border-radius: 50%;
-      overflow: hidden;
+      width: 120px; height: 120px;
       margin: 0 auto 6px;
-      background: #05091a;
+      display: flex; align-items: center; justify-content: center;
     }
-    .stamp-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .stamp-wrap img { width: 100%; height: 100%; object-fit: contain; }
     .disclaimer { font-size: 9px; color: #aab5c8; margin-top: 8px; text-align: center; max-width: 160px; line-height: 1.5; }
 
     @media print {
