@@ -2377,8 +2377,7 @@ function PaymentPage() {
     if (selectedPlan) total += planBasePrice[selectedPlan] ?? 0;
     return total;
   })();
-  const gst = subtotal * 0.18;
-  const grandTotal = subtotal + gst;
+  const grandTotal = subtotal;
   const hasSelection = selectedServices.size > 0 || selectedPlan !== null;
 
   const handleProceed = async () => {
@@ -2480,7 +2479,6 @@ function PaymentPage() {
               companyName:      form.company.trim(),
               selectedServices: serviceLabels,
               subtotal,
-              gst,
               grandTotal,
             }),
           })
@@ -2521,7 +2519,7 @@ function PaymentPage() {
 
     const downloadReceipt = () => {
       // Build detailed service rows from current selection state
-      const serviceRows: Array<{ name: string; qty: number; unitPrice: number; lineSubtotal: number; lineGst: number; lineTotal: number }> = [];
+      const serviceRows: Array<{ name: string; qty: number; unitPrice: number; lineSubtotal: number; lineTotal: number }> = [];
       selectedServices.forEach((id) => {
         if (id === "_test") return; // never show test item on receipt
         const svc = individualServices.find((s) => s.id === id);
@@ -2529,13 +2527,13 @@ function PaymentPage() {
         const unitPrice = serviceBasePrice[id] ?? 0;
         const qty = id === "catalog" ? skuQty : 1;
         const lineSub = unitPrice * qty;
-        serviceRows.push({ name: svc.name, qty, unitPrice, lineSubtotal: lineSub, lineGst: lineSub * 0.18, lineTotal: lineSub * 1.18 });
+        serviceRows.push({ name: svc.name, qty, unitPrice, lineSubtotal: lineSub, lineTotal: lineSub });
       });
       if (selectedPlan) {
         const plan = managementPlans.find((p) => p.id === selectedPlan);
         if (plan) {
           const up = planBasePrice[selectedPlan] ?? 0;
-          serviceRows.push({ name: `Complete Marketplace Management — ${plan.duration}`, qty: 1, unitPrice: up, lineSubtotal: up, lineGst: up * 0.18, lineTotal: up * 1.18 });
+          serviceRows.push({ name: `Complete Marketplace Management — ${plan.duration}`, qty: 1, unitPrice: up, lineSubtotal: up, lineTotal: up });
         }
       }
 
@@ -2548,7 +2546,6 @@ function PaymentPage() {
           <td class="td-service">${r.name}${r.qty > 1 ? `<span class="qty-note"> (per SKU)</span>` : ""}</td>
           <td class="td-center">${r.qty}</td>
           <td class="td-right">₹${r.unitPrice.toLocaleString("en-IN")}</td>
-          <td class="td-right">₹${r.lineGst.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
           <td class="td-right td-bold">₹${r.lineTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         </tr>`).join("");
 
@@ -2801,10 +2798,9 @@ function PaymentPage() {
   <table class="services-table">
     <thead>
       <tr>
-        <th style="text-align:left;width:45%">Service</th>
+        <th style="text-align:left;width:50%">Service</th>
         <th>Qty</th>
         <th>Unit Price</th>
-        <th>GST (18%)</th>
         <th>Total</th>
       </tr>
     </thead>
@@ -2822,9 +2818,8 @@ function PaymentPage() {
       </div>
     </div>
     <div class="summary-box">
-      <div class="summary-row"><span class="summary-label">Subtotal</span><span class="summary-value">₹${subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
-      <div class="summary-row"><span class="summary-label">GST (18%)</span><span class="summary-value">₹${gst.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
-      <div class="summary-total"><span>Grand Total</span><span>₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+      <div class="summary-row"><span class="summary-label">Subtotal</span><span class="summary-value">₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+      <div class="summary-row"><span class="summary-label">Balance Due</span><span class="summary-value">₹0.00</span></div>
       <div class="summary-paid"><span>✓ Total Paid</span><span>₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
     </div>
   </div>
@@ -3106,30 +3101,6 @@ function PaymentPage() {
                 </AnimatePresence>
               </div>
               <div className="border-t border-white/6 pt-4 space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/40">Subtotal</span>
-                  <motion.span
-                    key={subtotal}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.25 }}
-                    className="text-white/60"
-                  >
-                    {hasSelection ? fmt(subtotal) : "—"}
-                  </motion.span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/40">GST (18%)</span>
-                  <motion.span
-                    key={gst}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.25 }}
-                    className="text-white/60"
-                  >
-                    {hasSelection ? fmt(gst) : "—"}
-                  </motion.span>
-                </div>
                 <div className="flex items-center justify-between text-sm border-t border-white/6 pt-3">
                   <span className="text-white font-semibold">Total Payable</span>
                   <motion.span
