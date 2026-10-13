@@ -57,6 +57,70 @@ function Section({ children, className = "", id }: { children: React.ReactNode; 
   );
 }
 
+// ─── SEO Hook ────────────────────────────────────────────────────────────────
+
+const SITE = "https://www.pygrowth.in";
+
+function useSEO({
+  title,
+  description,
+  canonical,
+  noindex = false,
+}: {
+  title: string;
+  description: string;
+  canonical: string;
+  noindex?: boolean;
+}) {
+  useEffect(() => {
+    document.title = title;
+
+    const setMeta = (attr: string, key: string, content: string) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.content = content;
+    };
+
+    const setLink = (rel: string, href: string) => {
+      let el = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
+      if (!el) {
+        el = document.createElement("link");
+        el.rel = rel;
+        document.head.appendChild(el);
+      }
+      el.href = href;
+    };
+
+    setMeta("name", "description", description);
+    setLink("canonical", canonical);
+    setMeta("name", "robots", noindex ? "noindex, nofollow" : "index, follow");
+
+    // Open Graph
+    setMeta("property", "og:title", title);
+    setMeta("property", "og:description", description);
+    setMeta("property", "og:url", canonical);
+    setMeta("property", "og:type", "website");
+    setMeta("property", "og:site_name", "PY Growth");
+
+    // Twitter card
+    setMeta("name", "twitter:card", "summary");
+    setMeta("name", "twitter:title", title);
+    setMeta("name", "twitter:description", description);
+
+    return () => {
+      // On unmount restore defaults so stale tags never linger across navigations
+      if (noindex) {
+        const el = document.querySelector('meta[name="robots"]');
+        if (el) el.setAttribute("content", "index, follow");
+      }
+    };
+  }, [title, description, canonical, noindex]);
+}
+
 // ─── Shared Tool UI Components ───────────────────────────────────────────────
 
 function SemiGauge({ value, max = 100, color = "#6366f1" }: { value: number; max?: number; color?: string }) {
@@ -2039,6 +2103,11 @@ function Footer() {
 
 function HomePage() {
   const onConsult = useOutletContext<() => void>();
+  useSEO({
+    title: "PY Growth — Marketplace Growth Consulting for Ecommerce",
+    description: "PY Growth helps ecommerce businesses diagnose growth bottlenecks, improve profitability, and scale across marketplaces with structured strategy.",
+    canonical: `${SITE}/`,
+  });
   return (
     <>
       <HeroSection onConsult={onConsult} />
@@ -2056,17 +2125,43 @@ function HomePage() {
 }
 
 function SolutionsPage() {
-  return <div className="pt-20"><SolutionsSection /></div>;
+  useSEO({
+    title: "Marketplace Growth Solutions — PY Growth",
+    description: "Catalog optimization, advertising management, pricing strategy, and brand positioning services built for marketplace sellers.",
+    canonical: `${SITE}/solutions`,
+  });
+  return (
+    <div className="pt-20">
+      <h1 className="sr-only">Marketplace Growth Solutions</h1>
+      <SolutionsSection />
+    </div>
+  );
 }
 
 function GrowthOSPage() {
   const onConsult = useOutletContext<() => void>();
-  return <div className="pt-20"><GrowthOSSection onConsult={onConsult} /></div>;
+  useSEO({
+    title: "Growth OS — Structured Marketplace Operating System — PY Growth",
+    description: "PY Growth's 7-step Growth Operating System: Scan, Diagnose, Strategize, Implement, Measure, Optimize, Scale. Built for marketplace businesses.",
+    canonical: `${SITE}/growth-os`,
+  });
+  return (
+    <div className="pt-20">
+      <h1 className="sr-only">Growth Operating System</h1>
+      <GrowthOSSection onConsult={onConsult} />
+    </div>
+  );
 }
 
 function InsightsPage() {
+  useSEO({
+    title: "Marketplace Insights & Strategy — PY Growth",
+    description: "Actionable insights on marketplace visibility, profit margins, advertising efficiency, and growth frameworks for ecommerce sellers.",
+    canonical: `${SITE}/insights`,
+  });
   return (
     <div className="pt-20 min-h-screen">
+      <h1 className="sr-only">Marketplace Insights</h1>
       <GrowthLabSection />
     </div>
   );
@@ -2078,6 +2173,12 @@ function ArticlePage() {
   const article = articles.find((a) => a.slug === slug);
 
   useEffect(() => { window.scrollTo(0, 0); }, [slug]);
+
+  useSEO({
+    title: article ? `${article.title} — PY Growth` : "Article Not Found — PY Growth",
+    description: article ? article.desc : "This article could not be found.",
+    canonical: `${SITE}/insights/${slug ?? ""}`,
+  });
 
   if (!article) {
     return (
@@ -2342,6 +2443,13 @@ interface PaymentResult {
 }
 
 function PaymentPage() {
+  useSEO({
+    title: "Payment Portal — PY Growth",
+    description: "Securely purchase PY Growth marketplace consulting services.",
+    canonical: `${SITE}/payment-portal`,
+    noindex: true,
+  });
+
   const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [skuQty, setSkuQty] = useState(1);
@@ -3221,8 +3329,14 @@ function PaymentPage() {
 
 function ContactPage() {
   const onConsult = useOutletContext<() => void>();
+  useSEO({
+    title: "Contact PY Growth — Book a Marketplace Consultation",
+    description: "Book a marketplace growth consultation with PY Growth. Talk to a specialist about your ecommerce challenges and get a structured growth plan.",
+    canonical: `${SITE}/contact`,
+  });
   return (
     <div className="pt-20">
+      <h1 className="sr-only">Contact PY Growth</h1>
       <AboutSection />
       <ConsultationSection onConsult={onConsult} />
     </div>

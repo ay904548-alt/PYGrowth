@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+Disallow: /payment-portal
+
+Sitemap: https://www.pygrowth.in/sitemap.xml
