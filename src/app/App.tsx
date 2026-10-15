@@ -1663,7 +1663,7 @@ function GrowthOSSection({ onConsult }: { onConsult: () => void }) {
             </div>
           </div>
           <motion.div key={active} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="mt-10 rounded-[20px] border border-indigo-500/20 bg-indigo-500/5 p-8 max-w-2xl mx-auto text-center">
-            <h4 className="text-lg font-semibold text-white mb-2">{osSteps[active].title}</h4>
+            <h3 className="text-lg font-semibold text-white mb-2">{osSteps[active].title}</h3>
             <p className="text-white/50 text-sm leading-relaxed">{osSteps[active].desc}</p>
           </motion.div>
         </div>
@@ -1723,7 +1723,7 @@ function WhyFoundersSection() {
               {values.map((v) => (
                 <motion.div key={v.title} variants={fadeUp} className="flex gap-4">
                   <div className="w-10 h-10 rounded-xl border border-indigo-500/20 bg-indigo-500/8 flex items-center justify-center shrink-0"><v.icon size={18} className="text-indigo-400" /></div>
-                  <div><h4 className="text-sm font-semibold text-white mb-1">{v.title}</h4><p className="text-sm text-white/45 leading-relaxed">{v.desc}</p></div>
+                  <div><h3 className="text-sm font-semibold text-white mb-1">{v.title}</h3><p className="text-sm text-white/45 leading-relaxed">{v.desc}</p></div>
                 </motion.div>
               ))}
             </div>
@@ -1759,7 +1759,7 @@ function GrowthToolsSection() {
           {toolDefs.map((t) => (
             <motion.div key={t.id} variants={fadeUp} whileHover={{ y: -5 }} transition={{ duration: 0.22 }} className="rounded-[20px] border border-white/7 bg-[#0c1221] p-7 group hover:border-indigo-500/25 transition-colors duration-200 flex flex-col">
               <div className="w-11 h-11 rounded-xl border border-indigo-500/20 bg-indigo-500/10 flex items-center justify-center mb-5 group-hover:bg-indigo-500/20 transition-colors duration-200"><t.icon size={20} className="text-indigo-400" /></div>
-              <h4 className="text-sm font-semibold text-white mb-2">{t.title}</h4>
+              <h3 className="text-sm font-semibold text-white mb-2">{t.title}</h3>
               <p className="text-sm text-white/40 leading-relaxed mb-5 flex-1">{t.desc}</p>
               <button onClick={() => setOpenTool({ id: t.id, title: t.title })} className="flex items-center gap-1.5 text-xs font-medium text-indigo-400 group-hover:gap-3 transition-all duration-200">
                 Launch Tool <ArrowRight size={12} />
@@ -1841,8 +1841,10 @@ const articles = [
     slug: "organic-visibility-vs-paid-traffic",
     cat: "Marketplace Strategy",
     title: "Why Organic Visibility Is More Valuable Than Paid Traffic on Marketplaces",
+    metaTitle: "Organic vs Paid Traffic on Marketplaces — PY Growth",
     time: "5 min read",
     desc: "Organic ranking on Amazon and Flipkart compounds over time. Learn why sustainable marketplace traffic strategy outperforms ad-only growth — and how listing optimization reduces ad dependency.",
+    metaDesc: "Organic ranking on Amazon and Flipkart compounds over time. Learn how listing optimization builds sustainable marketplace traffic and reduces ad dependency.",
     relatedLinks: [
       { label: "Explore marketplace visibility optimization →", to: "/solutions" },
       { label: "See our structured growth methodology →", to: "/growth-os" },
@@ -1850,7 +1852,7 @@ const articles = [
     body: [
       { type: "p", text: "Every marketplace seller dreams of seeing their products on the first page. The common reaction is to increase advertising budgets. While paid ads can generate immediate traffic, they disappear the moment you stop spending. Organic visibility works differently — it compounds over time." },
       { type: "p", text: "Think about brands like The Souled Store. In its early years, the company certainly invested in marketing, but much of its long-term marketplace success came from continuously improving listings, product quality, customer reviews, fulfillment performance, and inventory availability. Those improvements helped products rank naturally for relevant searches, reducing dependence on advertising." },
-      { type: "h3", text: "What Marketplaces Actually Reward" },
+      { type: "h3", text: "What Do Amazon and Flipkart Actually Reward in Search Rankings?" },
       { type: "p", text: "Marketplaces such as Myntra, Amazon, and Flipkart reward products that consistently perform well. High click-through rates, strong conversion rates, low return percentages, positive customer ratings, and reliable stock availability all improve organic search rankings. These signals tell the marketplace that customers trust the product, making the platform more likely to recommend it organically rather than through paid placement." },
       { type: "h3", text: "The Paid-Only Trap" },
       { type: "p", text: "Businesses that rely only on paid advertising often enter a difficult cycle. As advertising costs rise and competition increases, maintaining profitability becomes harder. On the other hand, businesses with strong organic ranking continue receiving traffic even during periods of lower advertising spend. Paid campaigns should accelerate growth — not replace a healthy marketplace foundation built on catalog quality and listing optimization." },
@@ -1863,8 +1865,10 @@ const articles = [
     slug: "hidden-margin-killers",
     cat: "Profitability",
     title: "The Hidden Margin Killers Every Marketplace Seller Ignores",
+    metaTitle: "Hidden Costs of Selling on Marketplaces — PY Growth",
     time: "4 min read",
     desc: "Marketplace fees, return costs, and discounting erode ecommerce profitability silently. Learn to calculate your true contribution margin and identify the hidden costs of selling on marketplaces in India.",
+    metaDesc: "Marketplace fees, return costs, and discounting erode ecommerce margins silently. Learn to calculate contribution margin and identify hidden profitability leaks.",
     relatedLinks: [
       { label: "Explore marketplace profitability consulting →", to: "/solutions" },
     ],
@@ -1873,7 +1877,7 @@ const articles = [
       { type: "h3", text: "The ₹1,499 Shirt Problem" },
       { type: "p", text: "Imagine selling a shirt for ₹1,499 on Myntra. At first glance, it appears profitable. But after subtracting marketplace commissions, campaign discounts, shipping, packaging, returns, GST, advertising costs, and payment fees, the actual profit may be only ₹120 — or sometimes even negative. This is one of the most common hidden costs of selling on marketplaces that founders underestimate." },
       { type: "p", text: "This is why several growing D2C brands shifted their focus from pure revenue to contribution margins. Brands such as Snitch and XYXX have frequently spoken about balancing aggressive growth with profitability rather than chasing vanity metrics. Sustainable businesses understand every rupee that enters and leaves the system." },
-      { type: "h3", text: "The True Cost of Returns" },
+      { type: "h3", text: "How Do Marketplace Returns Affect Ecommerce Profitability?" },
       { type: "p", text: "One of the biggest hidden expenses is returns. A 20% return rate doesn't simply reduce sales — it increases reverse logistics costs, damages inventory, and consumes operational resources. Poor product images, inaccurate sizing, misleading descriptions, and inconsistent quality often become expensive marketing problems disguised as operational issues. High return rates are a direct hit to contribution margin." },
       { type: "h3", text: "The Discounting Trap" },
       { type: "p", text: "Another overlooked factor is discounting. Participating in every marketplace sale may boost order volume, but heavy discounts combined with advertising often eliminate margins completely. Selling more units only accelerates losses if the contribution margin is already weak." },
@@ -1886,8 +1890,10 @@ const articles = [
     slug: "growth-operating-system",
     cat: "Growth Frameworks",
     title: "How to Build a Growth Operating System for Your Marketplace Business",
+    metaTitle: "Building a Marketplace Growth Operating System — PY Growth",
     time: "5 min read",
     desc: "Learn how to scale a marketplace business using a structured ecommerce operating framework. Move from reactive D2C selling to systematic marketplace growth with measurable, compounding results.",
+    metaDesc: "How to scale a marketplace business with structured operating systems. Move from reactive selling to systematic D2C ecommerce growth with measurable results.",
     relatedLinks: [
       { label: "Explore the full Growth OS methodology →", to: "/growth-os" },
       { label: "See marketplace management services →", to: "/solutions" },
@@ -1935,7 +1941,7 @@ function GrowthLabSection() {
                     <span className="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full">{a.cat}</span>
                     <span className="text-xs text-white/30">{a.time}</span>
                   </div>
-                  <h4 className="text-sm font-semibold text-white leading-snug">{a.title}</h4>
+                  <h3 className="text-sm font-semibold text-white leading-snug">{a.title}</h3>
                   <p className="text-xs text-white/40 leading-relaxed">{a.desc}</p>
                   <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-400 group-hover:gap-3 transition-all duration-200 pt-1">Read Article <ArrowRight size={12} /></div>
                 </div>
@@ -1971,7 +1977,7 @@ function AboutSection() {
           {principles.map((p) => (
             <motion.div key={p.title} variants={fadeUp} whileHover={{ y: -4 }} className="rounded-[20px] border border-white/7 bg-[#0c1221] p-7 cursor-default hover:border-indigo-500/25 transition-all duration-200">
               <div className="w-10 h-10 rounded-xl border border-indigo-500/20 bg-indigo-500/10 flex items-center justify-center mb-5"><p.icon size={18} className="text-indigo-400" /></div>
-              <h4 className="text-sm font-semibold text-white mb-2">{p.title}</h4>
+              <h3 className="text-sm font-semibold text-white mb-2">{p.title}</h3>
               <p className="text-sm text-white/40 leading-relaxed">{p.desc}</p>
             </motion.div>
           ))}
@@ -2081,7 +2087,7 @@ function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-14">
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2">
-              <ImageWithFallback src={logoSrc} alt="PY Growth" className="w-16 h-16 object-contain" style={{ filter: "invert(1)", mixBlendMode: "screen", transform: "scale(2.0)", transformOrigin: "center center" }} />
+              <ImageWithFallback src={logoSrc} alt="PY Growth marketplace consulting logo" className="w-16 h-16 object-contain" style={{ filter: "invert(1)", mixBlendMode: "screen", transform: "scale(2.0)", transformOrigin: "center center" }} />
               <span className="text-white font-semibold tracking-wide text-sm">PY GROWTH</span>
             </div>
             <p className="text-sm text-white/35 leading-relaxed max-w-[240px]">A premium marketplace growth intelligence platform helping ecommerce businesses scale profitably.</p>
@@ -2116,8 +2122,8 @@ function Footer() {
 function HomePage() {
   const onConsult = useOutletContext<() => void>();
   useSEO({
-    title: "Marketplace Growth Consulting for Ecommerce Brands — PY Growth",
-    description: "PY Growth offers marketplace growth consulting for D2C ecommerce brands. We diagnose growth bottlenecks and build structured strategies for profitable scaling on Amazon, Flipkart, and beyond.",
+    title: "Ecommerce Marketplace Growth Consulting — PY Growth",
+    description: "Marketplace growth consulting for D2C brands. PY Growth diagnoses ecommerce bottlenecks and builds strategies for profitable scaling on Amazon and Flipkart.",
     canonical: `${SITE}/`,
   });
   return (
@@ -2139,7 +2145,7 @@ function HomePage() {
 function SolutionsPage() {
   useSEO({
     title: "Ecommerce Marketplace Management Services — PY Growth",
-    description: "Marketplace visibility optimization, advertising management, margin analysis, and pricing strategy for Amazon and Flipkart sellers. Ecommerce marketplace management services built for profitable growth.",
+    description: "Catalog optimization, advertising management, and margin analysis for Amazon and Flipkart sellers. Marketplace management services for ecommerce profitability.",
     canonical: `${SITE}/solutions`,
   });
   return (
@@ -2153,8 +2159,8 @@ function SolutionsPage() {
 function GrowthOSPage() {
   const onConsult = useOutletContext<() => void>();
   useSEO({
-    title: "Marketplace Growth Framework — 7-Step Operating System — PY Growth",
-    description: "A structured marketplace growth framework for ecommerce brands. PY Growth's 7-step methodology diagnoses bottlenecks, builds decision-making systems, and scales marketplace operations intelligently.",
+    title: "Marketplace Growth Framework for Ecommerce — PY Growth",
+    description: "PY Growth's 7-step marketplace framework diagnoses ecommerce bottlenecks, builds decision-making systems, and scales marketplace operations intelligently.",
     canonical: `${SITE}/growth-os`,
   });
   return (
@@ -2167,7 +2173,7 @@ function GrowthOSPage() {
 
 function InsightsPage() {
   useSEO({
-    title: "Marketplace Seller Insights — Ecommerce Growth Guides — PY Growth",
+    title: "Marketplace Insights for Ecommerce Sellers — PY Growth",
     description: "Practical guides for Indian marketplace sellers: ecommerce profitability, catalog optimization, advertising efficiency, and D2C marketplace scaling strategies.",
     canonical: `${SITE}/insights`,
   });
@@ -2187,8 +2193,8 @@ function ArticlePage() {
   useEffect(() => { window.scrollTo(0, 0); }, [slug]);
 
   useSEO({
-    title: article ? `${article.title} — PY Growth` : "Article Not Found — PY Growth",
-    description: article ? article.desc : "This article could not be found.",
+    title: article ? (article.metaTitle ?? `${article.title} — PY Growth`) : "Article Not Found — PY Growth",
+    description: article ? (article.metaDesc ?? article.desc) : "This article could not be found.",
     canonical: `${SITE}/insights/${slug ?? ""}`,
   });
 
@@ -3351,8 +3357,8 @@ function PaymentPage() {
 function ContactPage() {
   const onConsult = useOutletContext<() => void>();
   useSEO({
-    title: "Hire a Marketplace Growth Consultant — Book a Consultation — PY Growth",
-    description: "Book a marketplace profitability and growth audit with PY Growth. An ecommerce marketplace advisor in India helping D2C brands diagnose margin gaps and scale on Amazon and Flipkart.",
+    title: "Hire a Marketplace Growth Consultant — PY Growth",
+    description: "Book a marketplace growth audit with PY Growth, an ecommerce advisor helping D2C brands diagnose profitability gaps and scale on Amazon and Flipkart.",
     canonical: `${SITE}/contact`,
   });
   return (
